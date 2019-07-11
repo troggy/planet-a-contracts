@@ -47,13 +47,10 @@ contract('Earth Contract', (accounts) => {
   it('should allow to shake', async () => {
 
     // deploy earth
-    // replace token address placeholder to real token address
     let tmp = Earth._json.bytecode;
-    // token address
+    // replace token address placeholder to real token address
     tmp = replaceAll(tmp, '1231111111111111111111111111111111111123', co2.address);
-    // cards
     tmp = replaceAll(tmp, '2341111111111111111111111111111111111234', goellars.address);
-    // house
     tmp = replaceAll(tmp, '3451111111111111111111111111111111111345', passports.address);
     Earth._json.bytecode = tmp;
     const earth = await Earth.new();
@@ -75,7 +72,7 @@ contract('Earth Contract', (accounts) => {
     // citizen B signing transactions
     await passports.approve(earth.address, passportB, {from: citizenB});
 
-    // sending transactions
+    // sending transaction
     const tx = await earth.trade(
       passportA,           // uint256 passportA,
       `0x${factorA}`,      // bytes32 passDataAfter, 

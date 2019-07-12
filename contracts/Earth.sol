@@ -24,7 +24,7 @@ contract Earth {
     bytes32 passDataAfter, 
     bytes memory sigA,
     uint256 passportB,
-    uint256 factorB,
+    uint32 factorB,
     address airAddr
   ) public {
     // calculate payout for A
@@ -37,12 +37,12 @@ contract Earth {
     IERC20 dai = IERC20(DAI);
     // TODO: apply formula
     dai.transfer(passports.ownerOf(passportA), factorA);
-    dai.transfer(passports.ownerOf(passportB), factorB);
+    dai.transfer(passports.ownerOf(passportB), uint256(factorB));
     
     // TODO: apply formula
     passports.writeDataByReceipt(passportA, passDataAfter, sigA);
     bytes32 dataB = passports.readData(passportB);
-    passports.writeData(passportB, bytes32(uint256(dataB) + factorB));
+    passports.writeData(passportB, bytes32(uint256(dataB) + uint256(factorB)));
 
     // emit CO2
     if (factorA > 100 || factorB > 100) {

@@ -69,7 +69,7 @@ contract('Earth Contract', (accounts) => {
       hash,
       Buffer.from(citizenAPriv.replace('0x', ''), 'hex'),
     );
-    // citizen B signing transactions
+    // citizen B signing transaction
     await passports.approve(earth.address, passportB, {from: citizenB});
 
     // sending transaction
@@ -89,6 +89,8 @@ contract('Earth Contract', (accounts) => {
     assert.equal(balanceA.toNumber(), 255);
     const balanceB = await goellars.balanceOf(citizenB);
     assert.equal(balanceB.toNumber(), 100);
+    const passA = await passports.readData(passportA);
+    assert.equal(passA, `0x${factorA}`);
   });
 
 

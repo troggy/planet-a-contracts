@@ -26,14 +26,14 @@ contract('Air Contract', (accounts) => {
   const passportA = 123;
   let goellars;
   let co2;
-  let passports;
+  let country;
   let originalByteCode;
 
   before(async () => {
     goellars = await SimpleToken.new();
     await goellars.transfer(citizenA, 1000);
     co2 = await SimpleToken.new();
-    passports = await ERC1948.new();
+    country = await ERC1948.new();
     originalByteCode = Air._json.bytecode;
   });
 
@@ -48,8 +48,6 @@ contract('Air Contract', (accounts) => {
     // replace token address placeholder to real token address
     tmp = replaceAll(tmp, '1231111111111111111111111111111111111123', co2.address);
     tmp = replaceAll(tmp, '2341111111111111111111111111111111111234', goellars.address);
-    tmp = replaceAll(tmp, '3451111111111111111111111111111111111345', passports.address);
-    tmp = replaceAll(tmp, '4561111111111111111111111111111111111456', earth);
     Air._json.bytecode = tmp;
     const air = await Air.new();
 
@@ -57,23 +55,23 @@ contract('Air Contract', (accounts) => {
     await co2.transfer(air.address, 1000);
 
     // print passports for citizenA
-    await passports.mint(citizenA, passportA);
+    await country.mint(citizenA, passportA);
     // citizonA fills in some data
-    passports.writeData(passportA, '0x6a6f686261000000000000000000000000000000000000cc000000010000aabb', {from: citizenA});
+    country.writeData(passportA, '0x6a6f686261000000000000000000000000000000000000cc000000010000aabb', {from: citizenA});
 
     // citizen A signing transaction
-    await passports.approve(air.address, passportA, {from: citizenA});
+    await country.approve(air.address, passportA, {from: citizenA});
     await goellars.approve(air.address, 1000, {from: citizenA});
 
     // sending transaction
-    const tx = await air.plantTree(500, passportA).should.be.fulfilled;
+    const tx = await air.plantTree(500, country.address, passportA, earth).should.be.fulfilled;
 
     // check result
     const locked = await co2.balanceOf(earth);
     assert.equal(locked.toNumber(), 500);
     const balanceAir = await goellars.balanceOf(air.address);
     assert.equal(balanceAir.toNumber(), 500);
-    const passA = await passports.readData(passportA);
+    const passA = await country.readData(passportA);
     assert.equal(passA, '0x6a6f686261000000000000000000000000000000000000cc000001f50000aabb');
   });
 

@@ -15,13 +15,6 @@ contract Air {
   bytes32 constant LOCK_MAP = 0xffffffffffffffffffffffffffffffffffffffffffffffff00000000ffffffff;
   address constant CO2 = 0x1231111111111111111111111111111111111123;
   address constant DAI = 0x2341111111111111111111111111111111111234;
-  // passports is an NFT contract, which holds a token for each participant
-  // of an event. The passport contains country the holder belongs to and the
-  // amount of CO2 released.
-  address constant PASSPORTS_ADDR = 0x3451111111111111111111111111111111111345;
-  // CO2 flows from Earth to Air and maybe back. This is the address of the
-  // earth contract.
-  address constant EARTH_ADDR = 0x4561111111111111111111111111111111111456;
 
   function getLocked(bytes32 data) internal pure returns (uint32) {
     return uint32(uint256(data) >> 32);
@@ -35,11 +28,15 @@ contract Air {
     rv = rv | bytes32(uint256(sum) << 32);
   }
   
-  function plantTree(uint256 amount, uint256 passport) public {
+  function plantTree(
+    uint256 amount,
+    address countryAddr,
+    uint256 passport,
+    address earthAddr) public {
 
     // signer information
-    IERC1948 passports = IERC1948(PASSPORTS_ADDR);
-    address signer = passports.ownerOf(passport);
+    IERC1948 country = IERC1948(countryAddr);
+    address signer = country.ownerOf(passport);
 
     // pull payment
     IERC20 dai = IERC20(DAI);
@@ -48,31 +45,31 @@ contract Air {
     dai.transferFrom(signer, address(this), amount);
     
     // update passports
-    bytes32 data = passports.readData(passport);
+    bytes32 data = country.readData(passport);
     // TODO: apply formula
-    passports.writeData(passport, addLocked(data, uint32(amount)));
+    country.writeData(passport, addLocked(data, uint32(amount)));
 
     // lock CO2
     IERC20 co2 = IERC20(CO2);
-    co2.transfer(EARTH_ADDR, amount);
+    co2.transfer(earthAddr, amount);
   }
 
   // account used as game master.
-  address constant PRIME_MOTHER = 0x5671111111111111111111111111111111111567;
+  address constant GAME_MASTER = 0x5671111111111111111111111111111111111567;
 
   // used to model natural reduction of CO2 if below run-away point
-  function lockCO2(uint256 amount, bytes memory sig) public {
+  function lockCO2(uint256 amount, address earthAddr, bytes memory sig) public {
     address signer = bytes32(bytes20(address(this))).recover(sig);
-    require(signer == PRIME_MOTHER, "signer does not match");
+    require(signer == GAME_MASTER, "signer does not match");
     // lock CO2
     IERC20 co2 = IERC20(CO2);
-    co2.transfer(EARTH_ADDR, amount);
+    co2.transfer(earthAddr, amount);
   }
 
   // used to combine multiple contract UTXOs into one.
   function consolidate(bytes memory sig) public {
     address signer = bytes32(bytes20(address(this))).recover(sig);
-    require(signer == PRIME_MOTHER, "signer does not match");
+    require(signer == GAME_MASTER, "signer does not match");
     // lock CO2
     IERC20 co2 = IERC20(CO2);
     uint256 amount = co2.balanceOf(address(this));

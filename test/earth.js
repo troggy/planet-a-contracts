@@ -30,13 +30,15 @@ contract('Earth Contract', (accounts) => {
   const passportB = 234;
   let goellars;
   let co2;
-  let passports;
+  let countryA;
+  let countryB;
   let originalByteCode;
 
   before(async () => {
     goellars = await SimpleToken.new();
     co2 = await SimpleToken.new();
-    passports = await ERC1948.new();
+    countryA = await ERC1948.new();
+    countryB = await ERC1948.new();
     originalByteCode = Earth._json.bytecode;
   });
 
@@ -51,7 +53,7 @@ contract('Earth Contract', (accounts) => {
     // replace token address placeholder to real token address
     tmp = replaceAll(tmp, '1231111111111111111111111111111111111123', co2.address);
     tmp = replaceAll(tmp, '2341111111111111111111111111111111111234', goellars.address);
-    tmp = replaceAll(tmp, '3451111111111111111111111111111111111345', passports.address);
+    tmp = replaceAll(tmp, '4561111111111111111111111111111111111456', air);
     Earth._json.bytecode = tmp;
     const earth = await Earth.new();
 
@@ -60,8 +62,8 @@ contract('Earth Contract', (accounts) => {
     await co2.transfer(earth.address, 1000);
 
     // print passports for citizens
-    await passports.mint(citizenA, passportA);
-    await passports.mint(citizenB, passportB);
+    await countryA.mint(citizenA, passportA);
+    await countryB.mint(citizenB, passportB);
 
     // citizen A sharing signed receipt through QR code
     const hash = ethUtil.hashPersonalMessage(Buffer.from(zero + factorA, 'hex'));
@@ -70,7 +72,7 @@ contract('Earth Contract', (accounts) => {
       Buffer.from(citizenAPriv.replace('0x', ''), 'hex'),
     );
     // citizen B signing transaction
-    await passports.approve(earth.address, passportB, {from: citizenB});
+    await countryB.approve(earth.address, passportB, {from: citizenB});
 
     // sending transaction
     const tx = await earth.trade(
@@ -79,7 +81,8 @@ contract('Earth Contract', (accounts) => {
       `0x${sig.r.toString('hex')}${sig.s.toString('hex')}${sig.v.toString(16)}`, // sig
       passportB,           // uint256 passportB,
       100,                 // uint256 factorB,
-      air,                 // address airAddr
+      countryA.address,    // NFT contract 
+      countryB.address,    // NFT contract 
     ).should.be.fulfilled;
 
     // check result
@@ -89,7 +92,7 @@ contract('Earth Contract', (accounts) => {
     assert.equal(balanceA.toNumber(), 255);
     const balanceB = await goellars.balanceOf(citizenB);
     assert.equal(balanceB.toNumber(), 100);
-    const passA = await passports.readData(passportA);
+    const passA = await countryA.readData(passportA);
     assert.equal(passA, `0x${factorA}`);
   });
 

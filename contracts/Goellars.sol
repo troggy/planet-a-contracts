@@ -25,8 +25,8 @@ contract Goellars is IERC20, MinterRole {
   }
 
   // 1. DAI is pulled into the contract, and record created
-  // 2. sunDAI are minted in amount of DAI deposited
-  // 3. sunDAI transfered to the Bridge
+  // 2. goellars are minted in amount of DAI deposited
+  // 3. goellars transfered to the Bridge
   function _pullAndMint(address from, address to, uint256 value) internal {
     require(dai.transferFrom(from, address(this), value));
     daiBalance[from] = daiBalance[from].add(value);
@@ -42,9 +42,9 @@ contract Goellars is IERC20, MinterRole {
     }
   }
 
-  // +------+         +--------+       +--------+
-  // |  DAI |         | sunDAI |       | Bridge |
-  // +---+--+         +----+---+       +----+---+
+  // +------+         +----------+     +--------+
+  // |  DAI |         | goellars |     | Bridge |
+  // +---+--+         +----+-----+     +----+---+
   //     |                 |                |
   //     |                 |                |
   //     |                 | transferFrom   |

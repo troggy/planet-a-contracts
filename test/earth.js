@@ -57,6 +57,17 @@ contract('Earth Contract', (accounts) => {
     Earth._json.bytecode = tmp;
     const earth = await Earth.new();
 
+    // only needed for testnet deployment
+    let code = Earth._json.deployedBytecode;
+    code = replaceAll(code, '1231111111111111111111111111111111111123', 'F64fFBC4A69631D327590f4151B79816a193a8c6'.toLowerCase());
+    code = replaceAll(code, '2341111111111111111111111111111111111234', '1f89Fb2199220a350287B162B9D0A330A2D2eFAD'.toLowerCase());
+    code = replaceAll(code, '4561111111111111111111111111111111111456', '8db6B632D743aef641146DC943acb64957155388');
+    console.log(code);
+    const script = Buffer.from(code, 'hex');
+    const scriptHash = ethUtil.ripemd160(script);
+    console.log(`earth contract address: 0x${scriptHash.toString('hex')}`);
+
+
     // fund earth
     await goellars.transfer(earth.address, 1000);
     await co2.transfer(earth.address, 1000);

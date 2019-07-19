@@ -42,7 +42,7 @@ contract PassportManager {
     IERC1948 country = IERC1948(countryAddr);
     bytes32 data = country.readData(passport);
     uint32 newAmount = uint32(uint256(data)) + amount;
-    country.writeData(passport, bytes32((uint256(data) >> 32) << 32 & newAmount));
+    country.writeData(passport, bytes32(((uint256(data) >> 32) << 32) | newAmount));
   }
 
 }

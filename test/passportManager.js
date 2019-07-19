@@ -37,7 +37,7 @@ contract('Passport Manager', (accounts) => {
   let country;
   let originalByteCode;
 
-  before(async () => {
+  beforeEach(async () => {
     country = await ERC1948.new();
   });
 
@@ -57,6 +57,58 @@ contract('Passport Manager', (accounts) => {
     // check result
     const passA = await country.readData(passportA);
     assert.equal(passA, '0x00000000000000000000000000680061006e0073000000cc000000010000aabb');
+  });
+
+  it('should allow to update picId', async () => {
+    const passportManager = await PassportManager.new();
+
+    // print passports for citizenA
+    await country.mint(citizenA, passportA);
+    // citizonA fills in some data
+    country.writeData(passportA, '0x6a6f686261000000000000000000000000000000000000cc000000010000aabb', {from: citizenA});
+    await country.approve(passportManager.address, passportA, {from: citizenA});
+
+    // sending transaction
+    const tx = await passportManager.setPic(123456, country.address, passportA).should.be.fulfilled;
+
+    // check result
+    const passA = await country.readData(passportA);
+    assert.equal(passA, '0x6a6f6862610000000000000000000000000000000001e240000000010000aabb');
+  });
+
+  it('should allow to update co2Locked', async () => {
+    const passportManager = await PassportManager.new();
+
+    // print passports for citizenA
+    await country.mint(citizenA, passportA);
+    // citizonA fills in some data
+    country.writeData(passportA, '0x6a6f686261000000000000000000000000000000000000cc000000010000aabb', {from: citizenA});
+    await country.approve(passportManager.address, passportA, {from: citizenA});
+
+    // sending transaction
+    const tx = await passportManager.addLockedCo2(254, country.address, passportA).should.be.fulfilled;
+
+    // check result
+    const passA = await country.readData(passportA);
+    assert.equal(passA, '0x6a6f686261000000000000000000000000000000000000cc000000ff0000aabb');
+  });
+
+
+  it('should allow to update co2 emited', async () => {
+    const passportManager = await PassportManager.new();
+
+    // print passports for citizenA
+    await country.mint(citizenA, passportA);
+    // citizonA fills in some data
+    country.writeData(passportA, '0x6a6f686261000000000000000000000000000000000000cc000000010000aabb', {from: citizenA});
+    await country.approve(passportManager.address, passportA, {from: citizenA});
+
+    // sending transaction
+    const tx = await passportManager.addEmittedCo2(254, country.address, passportA).should.be.fulfilled;
+
+    // check result
+    const passA = await country.readData(passportA);
+    assert.equal(passA, '0x6a6f686261000000000000000000000000000000000000cc000000010000abb9');
   });
 
 

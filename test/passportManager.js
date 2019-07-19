@@ -8,6 +8,7 @@ const chai = require('chai');
 const ethUtil = require('ethereumjs-util');
 const PassportManager = artifacts.require('./PassportManager.sol');
 const ERC1948 = artifacts.require('./mocks/ERC1948');
+const passportLib = require('./passportLib.js');
 
 const should = chai
   .use(require('chai-as-promised'))
@@ -109,6 +110,8 @@ contract('Passport Manager', (accounts) => {
     // check result
     const passA = await country.readData(passportA);
     assert.equal(passA, '0x6a6f686261000000000000000000000000000000000000cc000000010000abb9');
+
+    console.log(passportLib.getReleasedCo2('0x6a6f686261000000000000000000000000000000000000cc000000010000abb9'));
   });
 
 

@@ -15,6 +15,8 @@ contract Air {
   bytes32 constant LOCK_MAP = 0xffffffffffffffffffffffffffffffffffffffffffffffff00000000ffffffff;
   address constant CO2 = 0x1231111111111111111111111111111111111123;
   address constant DAI = 0x2341111111111111111111111111111111111234;
+  uint256 constant CO2_PER_GEOLLAR = 16;
+  uint256 constant PASSPORT_FACTOR = 10**15;  // needed to save bytes in passport
 
   function getLocked(bytes32 data) internal pure returns (uint32) {
     return uint32(uint256(data) >> 32);
@@ -29,7 +31,7 @@ contract Air {
   }
   
   function plantTree(
-    uint256 amount,
+    uint256 goellarAmount,
     address countryAddr,
     uint256 passport,
     address earthAddr) public {
@@ -40,18 +42,16 @@ contract Air {
 
     // pull payment
     IERC20 dai = IERC20(DAI);
-    uint256 allowance = dai.allowance(signer, address(this));
-    require(allowance >= amount, "no funds allocated");
-    dai.transferFrom(signer, address(this), amount);
+    dai.transferFrom(signer, address(this), goellarAmount);
     
     // update passports
     bytes32 data = country.readData(passport);
     // TODO: apply formula
-    country.writeData(passport, addLocked(data, uint32(amount)));
+    country.writeData(passport, addLocked(data, uint32(goellarAmount * CO2_PER_GEOLLAR / PASSPORT_FACTOR)));
 
     // lock CO2
     IERC20 co2 = IERC20(CO2);
-    co2.transfer(earthAddr, amount);
+    co2.transfer(earthAddr, goellarAmount * CO2_PER_GEOLLAR);
   }
 
   // account used as game master.

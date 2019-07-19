@@ -9,6 +9,7 @@ const ethUtil = require('ethereumjs-util');
 const Air = artifacts.require('./Air.sol');
 const SimpleToken = artifacts.require('./mocks/SimpleToken');
 const ERC1948 = artifacts.require('./mocks/ERC1948');
+const PassportLib = require('./passportLib.js');
 
 const should = chai
   .use(require('chai-as-promised'))
@@ -24,15 +25,17 @@ contract('Air Contract', (accounts) => {
   const earth = accounts[2];
   const citizenAPriv = '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501201';
   const passportA = 123;
+  const totalCo2 = '10000000000000000000000';
+  const totalGoe = '1000000000000000000000';
   let goellars;
   let co2;
   let country;
   let originalByteCode;
 
   before(async () => {
-    goellars = await SimpleToken.new();
-    await goellars.transfer(citizenA, 1000);
-    co2 = await SimpleToken.new();
+    goellars = await SimpleToken.new(totalGoe);
+    await goellars.transfer(citizenA, '1000000000000000000');
+    co2 = await SimpleToken.new(totalCo2);
     country = await ERC1948.new();
     originalByteCode = Air._json.bytecode;
   });
@@ -52,27 +55,29 @@ contract('Air Contract', (accounts) => {
     const air = await Air.new();
 
     // pollute air
-    await co2.transfer(air.address, 1000);
+    await co2.transfer(air.address, totalCo2);
 
     // print passports for citizenA
     await country.mint(citizenA, passportA);
     // citizonA fills in some data
-    country.writeData(passportA, '0x6a6f686261000000000000000000000000000000000000cc000000010000aabb', {from: citizenA});
+    const before = '0x6a6f686261000000000000000000000000000000000000cc000000010000aabb';
+    country.writeData(passportA, before, {from: citizenA});
 
     // citizen A signing transaction
     await country.approve(air.address, passportA, {from: citizenA});
-    await goellars.approve(air.address, 1000, {from: citizenA});
+    await goellars.approve(air.address, '1000000000000000000', {from: citizenA});
 
     // sending transaction
-    const tx = await air.plantTree(500, country.address, passportA, earth).should.be.fulfilled;
+    const tx = await air.plantTree('1000000000000000000', country.address, passportA, earth).should.be.fulfilled;
 
     // check result
     const locked = await co2.balanceOf(earth);
-    assert.equal(locked.toNumber(), 500);
+    assert.equal(locked.toString(10), '16000000000000000000');
     const balanceAir = await goellars.balanceOf(air.address);
-    assert.equal(balanceAir.toNumber(), 500);
+    assert.equal(balanceAir.toString(10), '1000000000000000000');
     const passA = await country.readData(passportA);
-    assert.equal(passA, '0x6a6f686261000000000000000000000000000000000000cc000001f50000aabb');
+    const pl = new PassportLib(before);
+    assert.equal(passA, pl.updateLockedCo2(16000));
   });
 
 

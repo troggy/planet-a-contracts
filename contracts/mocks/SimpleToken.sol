@@ -19,15 +19,13 @@ contract SimpleToken is ERC20, ERC20Mintable {
 
   string public constant name = "SimpleToken"; // solium-disable-line uppercase
   string public constant symbol = "SIM"; // solium-disable-line uppercase
-  uint8 public constant decimals = 8; // solium-disable-line uppercase
-
-  uint256 public constant INITIAL_SUPPLY = 10000 * (10 ** uint256(decimals));
+  uint8 public constant decimals = 18; // solium-disable-line uppercase
 
   /**
    * @dev Constructor that gives msg.sender all of existing tokens.
    */
-  constructor() public {
-    _mint(msg.sender, INITIAL_SUPPLY);
+  constructor(uint256 amount) public {
+    _mint(msg.sender, amount);
   }
 
 }

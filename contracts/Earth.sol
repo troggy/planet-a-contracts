@@ -6,73 +6,65 @@
  */
 pragma solidity ^0.5.2;
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
-import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "./IERC1948.sol";
 
 contract Earth {
-  using ECDSA for bytes32;
 
   address constant CO2 = 0x1231111111111111111111111111111111111123;
   address constant DAI = 0x2341111111111111111111111111111111111234;
   // CO2 flows from Earth to Air and maybe back. This is the address of the
   // air contract.
   address constant AIR_ADDR = 0x4561111111111111111111111111111111111456;
+
+  uint256 constant MAX_CO2_EMISSION = 25000000000000000000; // 25 gigatonnes
+  uint256 constant PASSPORT_FACTOR = 10**15;  // needed to save bytes in passport
+  uint256 constant MAX_GOE_PAYOUT = 600000000000000000;    // 60 cents
   
   function trade(
     uint256 passportA,
     bytes32 passDataAfter, 
     bytes memory sigA,
     uint256 passportB,
-    uint32 factorB,
     address countryAaddr,
     address countryBaddr
   ) public {
     // calculate payout for A
+    // sender can up to a bound decide the size of the emission
     IERC1948 countryA = IERC1948(countryAaddr);
-    bytes32 passDataBefore = countryA.readData(passportA);
-    uint256 factorA = uint256(passDataAfter) - uint256(passDataBefore);
-    // TODO calculate factor B
+    uint256 emission = (uint256(uint32(uint256(passDataAfter))) - uint256(uint32(uint256(countryA.readData(passportA))))) * PASSPORT_FACTOR;
+    require(emission <= MAX_CO2_EMISSION, "invalid emission");
 
     // pay out trade        
     IERC20 dai = IERC20(DAI);
-    // TODO: apply formula
-    dai.transfer(countryA.ownerOf(passportA), factorA);
+    dai.transfer(countryA.ownerOf(passportA), MAX_GOE_PAYOUT * emission / MAX_CO2_EMISSION);
     IERC1948 countryB = IERC1948(countryBaddr);
-    dai.transfer(countryB.ownerOf(passportB), uint256(factorB));
+    dai.transfer(countryB.ownerOf(passportB), MAX_GOE_PAYOUT * emission / MAX_CO2_EMISSION);
     
-    // TODO: apply formula
+    // update passports
     countryA.writeDataByReceipt(passportA, passDataAfter, sigA);
     bytes32 dataB = countryB.readData(passportB);
-    countryB.writeData(passportB, bytes32(uint256(dataB) + uint256(factorB)));
+    countryB.writeData(passportB, bytes32(uint256(dataB) + uint256(emission / PASSPORT_FACTOR)));
 
-    // emit CO2
-    if (factorA > 100 || factorB > 100) {
-      IERC20 co2 = IERC20(CO2);
-      // TODO: apply formula
-      co2.transfer(AIR_ADDR, factorA + factorB);
-    }
+    // // emit CO2
+    IERC20 co2 = IERC20(CO2);
+    co2.transfer(AIR_ADDR, emission * 2);
   }
 
   // account used as game master.
   address constant GAME_MASTER = 0x5671111111111111111111111111111111111567;
 
   // used to model natural increase of CO2 if above run-away point.
-  // question: temprature will increase, but will CO2 increase as well?
-  function unlockCO2(uint256 amount, bytes memory sig) public {
-    address signer = bytes32(bytes20(address(this))).recover(sig);
-    require(signer == GAME_MASTER, "signer does not match");
+  function unlockCO2(uint256 amount, uint8 v, bytes32 r, bytes32 s) public {
+    require(ecrecover(bytes32(uint256(uint160(address(this))) | amount << 160), v, r, s) == GAME_MASTER, "signer does not match");
     // unlock CO2
-    IERC20 co2 = IERC20(CO2);
-    co2.transfer(AIR_ADDR, amount);
+    IERC20(CO2).transfer(AIR_ADDR, amount);
   }
 
   // used to combine multiple contract UTXOs into one.
-  function consolidate(bytes memory sig) public {
-    address signer = bytes32(bytes20(address(this))).recover(sig);
-    require(signer == GAME_MASTER, "signer does not match");
+  function consolidate(uint8 v, bytes32 r, bytes32 s) public {
+    require(ecrecover(bytes32(bytes20(address(this))), v, r, s) == GAME_MASTER, "signer does not match");
     // lock CO2
     IERC20 co2 = IERC20(CO2);
-    uint256 amount = co2.balanceOf(address(this));
-    co2.transfer(address(this), amount);
+    co2.transfer(address(this), co2.balanceOf(address(this)));
   }
 }

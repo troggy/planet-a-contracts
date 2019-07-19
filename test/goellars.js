@@ -24,7 +24,7 @@ contract('Goellars', (accounts) => {
   let bridge;
 
   beforeEach(async () => {
-    dai = await NativeToken.new();
+    dai = await NativeToken.new('100000000000000000000');
     [, alice, bob, bridge] = accounts;
     goellars = await Goellars.new(dai.address, bridge, '0x00444149', '0x00444149');
   });

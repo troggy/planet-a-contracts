@@ -48,29 +48,29 @@ module.exports = class PassportLib {
   }
 
   constructor(data) {
-    this.dataBefore = makeBuf(data);
+    this.dataBefore = PassportLib.makeBuf(data);
   }
 
   updateReleasedCo2(amount) {
     const newAmount = PassportLib.getReleasedCo2(this.dataBefore) + amount;
     this.dataBefore.writeUInt32BE(newAmount, 28);
-    return this.dataBefore;
+    return `0x${this.dataBefore.toString('hex')}`;
   }
 
   updateLockedCo2(amount) {
     const newAmount = PassportLib.getLockedCo2(this.dataBefore) + amount;
     this.dataBefore.writeUInt32BE(newAmount, 24);
-    return this.dataBefore;
+    return `0x${this.dataBefore.toString('hex')}`;
   }
 
   setPicId(picId) {
     this.dataBefore.writeUInt32BE(picId, 20);
-    return this.dataBefore;
+    return `0x${this.dataBefore.toString('hex')}`;
   }
 
   setName(name) {
     Buffer.from(PassportLib.hexEncode(name), 'hex').copy(this.dataBefore, 0, 0, 20);
-    return this.dataBefore;
+    return `0x${this.dataBefore.toString('hex')}`;
   }
     
 }

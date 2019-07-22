@@ -1,4 +1,4 @@
-# Tragedy of the co2mmons 
+# Planet A
 
 the contract side of things.
 

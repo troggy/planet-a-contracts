@@ -40,7 +40,11 @@ const airContractAddr = bufferToHex(ripemd160(airCode));
 
 fs.writeFileSync(
   airOutFile,
-  JSON.stringify({ address: airContractAddr, code: airCode, abi: Air.abi })
+  JSON.stringify(
+    { address: airContractAddr, code: airCode, abi: Air.abi },
+    null,
+    2
+  )
 );
 console.log("Air exported to", airOutFile);
 
@@ -68,11 +72,15 @@ earthCode = replaceAll(
 );
 const earthContractAddr = bufferToHex(ripemd160(earthCode));
 fs.writeFileSync(
-  "Earth.json",
-  JSON.stringify({
-    address: earthContractAddr,
-    code: earthCode,
-    abi: Earth.abi
-  })
+  earthOutFile,
+  JSON.stringify(
+    {
+      address: earthContractAddr,
+      code: earthCode,
+      abi: Earth.abi
+    },
+    null,
+    2
+  )
 );
 console.log("Earth exported to", earthOutFile);
